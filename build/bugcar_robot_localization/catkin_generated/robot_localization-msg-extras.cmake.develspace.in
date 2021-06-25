@@ -1,0 +1,2 @@
+set(robot_localization_MESSAGE_FILES "")
+set(robot_localization_SERVICE_FILES "/home/pif/thesis_ws/src/bugcar_robot_localization/srv/GetState.srv;/home/pif/thesis_ws/src/bugcar_robot_localization/srv/SetDatum.srv;/home/pif/thesis_ws/src/bugcar_robot_localization/srv/SetPose.srv;/home/pif/thesis_ws/src/bugcar_robot_localization/srv/ToggleFilterProcessing.srv;/home/pif/thesis_ws/src/bugcar_robot_localization/srv/FromLL.srv;/home/pif/thesis_ws/src/bugcar_robot_localization/srv/ToLL.srv")

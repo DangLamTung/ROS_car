@@ -1,0 +1,10 @@
+Uart GPS:
+
+    ATTRS{idProduct}=="0002"
+    ATTRS{idVendor}=="1d6b"
+
+Uart IMU/Odom:
+
+
+    ATTRS{idProduct}=="0002"
+    ATTRS{idVendor}=="1d6b"

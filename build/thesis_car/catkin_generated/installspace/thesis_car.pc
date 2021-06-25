@@ -1,0 +1,8 @@
+prefix=/home/pif/thesis_ws/install
+
+Name: thesis_car
+Description: Description of thesis_car
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

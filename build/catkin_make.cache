@@ -1,0 +1,2 @@
+bugcar_robot_localization:rviz_satellite:thesis_car
+-DCATKIN_DEVEL_PREFIX=/home/pif/thesis_ws/devel -DCMAKE_INSTALL_PREFIX=/home/pif/thesis_ws/install -G Unix Makefiles
