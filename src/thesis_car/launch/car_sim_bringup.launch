@@ -1,0 +1,22 @@
+<launch>
+
+  <node pkg="thesis_car" type="connect_simulation.py" name="connect_simulation" output="screen"></node>
+  
+    <!-- Start rviz with a pre-configured AerialMap instance. It will use the fake GPS fix from above. -->
+  <node pkg="rviz" type="rviz" name="rviz"/>
+<!-- 
+  <node name="nmea_serial_driver_node" pkg="nmea_navsat_driver" type="nmea_serial_driver" output="screen">
+    <param name="port" value="/dev/ttyGPS"/>
+    <param name="baud" value="9600" />
+    <param name="frame_id" value="gps" />
+    <param name="use_GNSS_time" value="False"  />
+    <param name="time_ref_source" value="gps"/>
+    <param name="useRMC" value="False" />
+  </node> -->
+
+  <!-- definition of static transforms -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="sonar" args="0.13 0 0 0 0 0 /base_link /sonar_link 100" /> -->
+
+ 
+
+</launch>
