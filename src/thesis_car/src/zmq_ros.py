@@ -33,8 +33,8 @@ def Rz(theta):
     return np.matrix([[ np.cos(theta), -np.sin(theta)],
                    [ np.sin(theta), np.cos(theta) ],
                   ])
-def draw_map( image,pitch, Lat, Lon,global_path):
-    global map_png, result
+def draw_map( map_png,image,pitch, Lat, Lon,global_path):
+    global result
     
     demo = np.copy(map_png)
     x, y = int((Lon + 100 - Lon_Or)*map_png.shape[1]/(106.66226 - 106.65644)),int((Lat_Or - Lat)*map_png.shape[0]/(10.77654 - 10.77023))
@@ -114,106 +114,21 @@ def draw_map( image,pitch, Lat, Lon,global_path):
     # preparing the mask to overlay
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
     result_mask = cv2.bitwise_and(image, image, mask = mask)   
-  
-    # # print(x,y)
+def occu_map(image):
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     
-    # #predict the position
-    # x1, y1 = 0, 0
-    # x2, y2 = 200, 400
-    # line_thickness = 1
+    # # Threshold of blue in HSV space
 
+    lower_blue = np.array([0, 0, 0])
+    upper_blue = np.array([100, 100, 100])
+ 
+    # preparing the mask to overlay
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
-    # occupancy_map = np.zeros((16,32))
-    # dis_map = np.ones((16,32))*1000
-    # # p1,p2,p3,p4 = get_map_pos(pitch, x, y)
-    
-    
-   
-    # lon_now, lat_now = pix2global(x,y,map_png.shape[1],map_png.shape[0])
-
-
-    # # print("  Distance: ",  ConvertGPStoUCS(lat_goal,lon_goal,lat_now, lon_now) )
-    # for i in range(16):
-    #     for j in range(32):
-            
-    #         if( (mask[i*10:(i*10+ 10),j*10:(j*10 + 10)] == 255).sum( ) > 80):
-    #             occupancy_map[i][j] = 1
-              
-
-    #         cv2.line(result, (0, (i+1)*10), (320, (i+1)*10), (255, 255,255), thickness=line_thickness)
-    #         cv2.line(result, (j*10, 0), (j*10, 160), (255, 255,255), thickness=line_thickness)
-          
-    # road = np.flip( occupancy_map, 0)
-    # road = np.flip( occupancy_map, 1)
-    # g = SquareGrid(32,16)
-    # # mapping occupancy map to real map
-    
-    # map_pos = []
-    # wall = []
-    # for i in range(16):
-    #     for j in range(32):
-    #         if(road[i][j] == 0):
-    #             wall.append((j,i))
-    #         else:
-    #             _, r_p5 = get_map_loc(pitch, x, y, i, j)
-    #             map_pos.append(r_p5)
-    #             dis = np.hypot(map_path_x[target_idx] - r_p5[0],map_path_y[target_idx] - r_p5[1] )
-    #             lon_now, lat_now = pix2global(r_p5[0],r_p5[1],map_png.shape[1],map_png.shape[0])
-    #             dis_map[i][j] = dis
-    # # print(dis_map)s
-    # min_node = np.argmin(dis_map,axis = 1)
-    
-    # #map occupancy to real map
-    # rot_map = Rz(pitch)
-
-    # # target_to_local = np.dot(rot_map,np.array( [map_path_x[target_idx],map_path_y[target_idx],0,1]))
-    # # print(np.where(np.logical_and(map_path_x>=p1[0], map_path_x<=p3[0])))
-    # for global_in in global_path_inframe:
-     
-    #     cv2.circle(result_mask,(int((global_in[0] + 3)/3*result_mask.shape[0]), int(global_in[1]/3*result_mask.shape[1])), radius=1, color=(0, 0, 255), thickness=-1)
-                
-    
-    # # cv2.circle(result_mask,(map_path_x[target_idx],map_path_y[target_idx]), radius=3, color=(0, 255, 0), thickness=-1)
-    # goal_x, goal_y = np.unravel_index(dis_map.argmin(), dis_map.shape)
-    # start, goal = (16, 15),(min_node[0],0)
-    # # print(goal)
-    # for i in range(16):
-    #     index_pos_list = [ j for j in range(len(occupancy_map[:,j])) if occupancy_map[i][j] == 1 ]
-    #     print(index_pos_list)   
-    #     if(len(index_pos_list) > 2):    
-    #         point = (int( (index_pos_list[len(index_pos_list)-1]- index_pos_list[0] )*10+5),i*10+5)
-            
-    #         cv2.circle(result_mask, point, radius=1, color=(0, 0, 255), thickness=-1)
-    # # # print(road)n
-    # # g.walls = wall
-    # # # print(diagram4.weights)
-    # # # print(diagram4.cost(start,goal))
-    # # found_way = 0
-    # # came_from, cost_so_far = a_star_search(g, start, goal)
-    # # # print(came_from)
-    # # for loc, op in came_from.items():
-
-
-    # #     path = reconstruct_path(came_from, start=start, goal=goal)
-        
-    # #     for i in range(len(path)):
-    # #         if(i>1):
-    # #             point1 = ((path[i-1][0])*10+5,path[i-1][1]*10+5)
-    # #             point2 = ((path[i][0])*10+5,path[i][1]*10+5)
-    # #             cv2.line(result_mask, point1, point2, (0, 255, 0), thickness=line_thickness)
-    # #         road[path[i][1]][path[i][0]] = 2
-    # # print(road)
-    # # _thread.start_new_thread( draw_grid, ( g ) )
-
-    # # print(came_from)
-    # # draw_grid(g, path=reconstruct_path(came_from, start=start, goal=goal))    
-
-    # # result = cv2.warpPerspective(result, M, (IMAGE_W, IMAGE_H)) # Image warping
-    # # time.sleep(100)
-    cv2.imshow('frame', result_mask)
-    # cv2.imshow("im1",image)
-    cv2.waitKey(0)
-
+    mask = np.fliplr(mask)
+    # mask = np.flipud(mask)
+    # result_mask = cv2.bitwise_and(image, image, mask = mask)   
+    return np.array(255 - mask,dtype=np.int8)
 def send_control(raw,angle,velocity):
     raw.write(b's')
     raw.write(bytes([int(angle / 10)]))
@@ -221,10 +136,6 @@ def send_control(raw,angle,velocity):
     raw.write(bytes([velocity]))
     raw.write(bytes([(velocity + angle) % 37]))
     raw.write(b'e')    
-import threading
-import serial
-import pynmea2
-import io
 
 connected = False
 # raw.open()
@@ -249,39 +160,49 @@ class ReadLine:
                 return r
             else:
                 self.buf.extend(data)
- 
-def zmq_connect(global_path):
-    global socket
-    while True:
-        socket.send_string(str(0) + ","+str(1))
-        poller = zmq.Poller()
-        poller.register(socket, zmq.POLLIN)
-        evt = dict(poller.poll(TIMEOUT))
-        if evt:
-            if evt.get(socket) == zmq.POLLIN:
-                response = socket.recv(zmq.NOBLOCK)
-                arr = response.split()	
-                image = Image.open(BytesIO(base64.b64decode(arr[0])))
-                image = np.asarray(image)   
+map_png = cv2.imread("./map_png.PNG")
+def zmq_connect(v, o):
+    global socket,map_png
+    arr = [0,0,0,0,0,0]
+    socket.send_string(str(v) + ","+str(o))
+    poller = zmq.Poller()
+    poller.register(socket, zmq.POLLIN)
+    evt = dict(poller.poll(TIMEOUT))
+    if evt:
+        if evt.get(socket) == zmq.POLLIN:
+            response = socket.recv(zmq.NOBLOCK)
+            arr = response.split()	
+            image = Image.open(BytesIO(base64.b64decode(arr[0])))
+            image = np.asarray(image)   
 
                 # bird_image = Image.open(BytesIO(base64.b64decode(arr[6])))
                 # bird_image = np.asarray(bird_image)   
-                cv2.imshow("im",image)
-
-                _thread.start_new_thread( draw_map, (image,float(arr[4])*180/np.pi, float(arr[1]), float(arr[2]),global_path) )
+            # cv2.imshow("im",image)
+            occu = occu_map(image)
+            
+            # _thread.start_new_thread( draw_map, (map_png,image,float(arr[4])*180/np.pi, float(arr[1]), float(arr[2]),global_path) )
                 #_thread.start_new_thread( draw_map, ("Thread-2", image,float(arr[1]), float(arr[2]),float(arr[4])*180/np.pi,global_path) )
-                print(arr[1], arr[2], arr[3], arr[4], arr[5])
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+            # print(arr[1], float(arr[2])+ 100, arr[3], arr[4], arr[5],arr[6], arr[7])
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
                 # print(response)
                 
-        time.sleep(0.1)
-        socket.close()
+        # time.sleep(0.1)
+    socket.close()
 
-        socket = context.socket(zmq.REQ)
-        socket.connect("tcp://localhost:12346")
-zmq_connect([100,100])
+    socket = context.socket(zmq.REQ)
+    socket.connect("tcp://localhost:12346")
+    return occu, arr[1], arr[2], arr[3], arr[4], arr[5],arr[6], arr[7]
+
+
 # while True:
+#     zmq_connect(0,0)
+#     # cv2.imshow("im",map_png)
+    # if cv2.waitKey(1) & 0xFF == ord('q'):
+    #     break
+                
+                
+    
 #     socket.send_string("request")
 #     poller = zmq.Poller()
 #     poller.register(socket, zmq.POLLIN)

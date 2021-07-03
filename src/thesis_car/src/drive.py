@@ -6,12 +6,9 @@ import os
 import shutil
 
 import numpy as np
-import socketio
-import eventlet
-import eventlet.wsgi
+
 from PIL import Image
-from flask import Flask
-from io import BytesIO
+
 import cv2
 # from keras.models import load_model
 
@@ -21,8 +18,6 @@ import time
 from typing import Dict, List, Iterator, Tuple, TypeVar
 import numpy as np
 
-model = None
-prev_image_array = None
 
 MAX_SPEED = 25
 MIN_SPEED = 10
@@ -37,7 +32,7 @@ dst = np.float32([[80, IMAGE_H], [120, IMAGE_H], [0, 0], [IMAGE_W, 0]])
 M = cv2.getPerspectiveTransform(src, dst) # The transformation matrix
 Minv = cv2.getPerspectiveTransform(dst, src) # Inverse transformation
 
-map_png = cv2.imread("./map_png.png")
+# map_png = cv2.imread("./map_png.png")
 Lon_Or = 106.65644
 Lat_Or = 10.77654
 
@@ -277,87 +272,6 @@ def PID(err,sp):
     angle = Kp*(sp - err)
     # send_control(angle/180*np.pi, 50)ư
     return angle 
-
-@sio.on('telemetry')
-def telemetry(sid, data):
-    global image
-    if data:
-
-        # The current steering angle of the car
-        steering_angle = float(data["steering_angle"])
-        # The current throttle of the car
-        throttle = float(data["throttle"])
-        # The current speed of the car
-        speed = float(data["speed"])
-
-        Lat = float(data["Lat"])
-
-        Lon = float(data["Lon"])
-
-        roll = float(data["r"])
-
-        pitch = float(data["p"])
-
-        yaw = float(data["y"])
-        # The current image from the center camera of the car
-        image = Image.open(BytesIO(base64.b64decode(data["image"])))
-        # save frame
-        # if args.image_folder != '':
-        #     timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
-        #     image_filename = os.path.join(args.image_folder, timestamp)
-        #     image.save('{}.jpg'.format(image_filename))
-            
-        try:
-            image = np.asarray(image)       # from PIL image to numpy array
-            
-            image = utils.preprocess(image) # apply the preprocessing
-            
-            
-            #waits for user to press any key  
-            #(this is necessary to avoid Python kernel form crashing) 
-            
-            _thread.start_new_thread( print_time, ("Thread-1", image,Lat,Lon,pitch ) )
-            _thread.start_new_thread( draw_map, ("Thread-1",pitch, Lat,Lon ) )
-            image = np.array([image])       # the model expects 4D array
-            
-            # # predict the steering angle for the image
-            # steering_angle = float(model.predict(image, batch_size=1))
-            # # lower the throttle as the speed increases
-            # # if the speed is above the current speed limit, we are on a downhill.
-            # # make sure we slow down first and then go back to the original max speed.
-            # global speed_limit
-            # if speed > speed_limit:
-            #     speed_limit = MIN_SPEED  # slow down
-            # else:
-            #     speed_limit = MAX_SPEED
-            #send_control(steering_angle, throttle)
-            # throttle = 1.0 - steering_angle**2 - (speed/speed_limit)**2
-            PID(pitch,0)
-            # print('{} {} {} {} {} {} {} {}'.format(steering_angle, speed, throttle,roll,pitch,yaw, Lat, Lon + 100))
-            sio.emit('manual', data={}, skip_sid=True)
-            print()
-        except Exception as e:
-            print(e)
-        
-    else:
-        # NOTE: DON'T EDIT THIS.
-        sio.emit('manual', data={}, skip_sid=True)
-
-
-@sio.on('connect')
-def connect(sid, environ):
-    print("connect ", sid)
-    send_control(0, 0)
-
-
-def send_control(steering_angle, throttle):
-    sio.emit(
-        "steer",
-        data={
-            'steering_angle': steering_angle.__str__(),
-            'throttle': throttle.__str__()
-        },
-        skip_sid=True)
 
 
 if __name__ == '__main__':

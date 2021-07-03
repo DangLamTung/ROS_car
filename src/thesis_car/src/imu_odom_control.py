@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # license removed for brevity
 import rospy
 
@@ -53,7 +53,7 @@ def main():
             vx = data[0]/1000
             vy = data[1]/1000
             vth = data[6]
-            #print(vx/1000,vy/1000,data[2])
+            print(vx/1000,vy/1000,data[2])
             current_time = rospy.Time.now()
             imu_data.header.stamp = current_time
             imu_data.header.frame_id = "odom"

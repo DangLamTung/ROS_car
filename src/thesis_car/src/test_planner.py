@@ -16,14 +16,9 @@ import tf as ros_tf
 
 from pyroutelib3 import Router, Datastore 
 import numpy as np
-
-import rospkg 
-rospack = rospkg.RosPack()
-# get the file path for rospy_tutorials
-
 #============================================================================================
-print(rospack.get_path('thesis_car'))
-router = Router("car",str(rospack.get_path('thesis_car'))+ "/src/map.osm") # Initialise it
+
+router = Router("car","./map.osm") # Initialise it
 
 #============================================================================================
 '''   Init ROS node, input and output topics   '''
@@ -31,47 +26,37 @@ rospy.init_node("Google_Map_Global_Planner")
 tf_listener = ros_tf.TransformListener()    
 
 move_base_stt_input = "move_base/status"
-gps_position_input  = "gps/fix"
-gps_orign_input     = "gps/fix_origin"
+gps_position_input  = "gps/filtered"
 geo_goal_input      = "move_base/geo_goal"
 map_goal_input      = "move_base/goal"
 
 global_plan_output  = "move_base/OSMPlanner/plan"
 #============================================================================================
 
-def FindMetersPerLat(lat): # Compute lengths of degrees
-	
-	m1 = 111132.92
-	m2 = -559.82
-	m3 = 1.175
-	m4 = -0.0023
-	p1 = 111412.84
-	p2 = -93.5
-	p3 = 0.118
 
-	lat = np.deg2rad(lat)
-	# Calculate the length of a degree of latitude and longitude in meters
-	metersPerLat = m1 + (m2 * np.cos(2 * lat)) + (m3 * np.cos(4 * lat)) + (m4 * np.cos(6 * lat))
-	metersPerLon = (p1 * np.cos(lat)) + (p2 * np.cos(3 * lat)) + (p3 * np.cos(5 * lat))
-	return metersPerLat,metersPerLon
-def ConvertGPStoUCS(_LatOrigin,_LonOrigin,Lat, Lon):
-	metersPerLat,metersPerLon =  FindMetersPerLat(_LatOrigin)
-	yPosition  = metersPerLat * (Lat - _LatOrigin)
-	xPosition  = metersPerLon * (Lon - _LonOrigin)
-	return xPosition, yPosition
-
-def ConvertUCStoGPS(LatOrigin,LonOrigin,x, y):
-	metersPerLat,metersPerLon =  FindMetersPerLat(LatOrigin)
-	Lat_dis = ((LatOrigin + (y) / metersPerLat))
-	Lon_dis = ((LonOrigin + (x) / metersPerLon))
-	return Lat_dis,Lon_dis
 
 #============================================================================================
 '''   This function converts a point in map coordinate into lat_long   '''
 def map2ll(x_map,y_map):
-    global gps_origin
-    lat, lon = ConvertUCStoGPS(gps_origin['lat'],gps_origin['long'],x_map, y_map)
-    ll_point = {'lat':lat, 'long':lon}
+    
+    ros_tf_transformer = ros_tf.TransformerROS()
+    try:
+        tf_listener.waitForTransform("utm", "map", rospy.Time(), \
+                                     rospy.Duration(5.0))
+    except (ros_tf.LookupException):
+        rospy.logerr('Cannot find utm-map tf')
+        return None  
+    (trans, rot) = tf_listener.lookupTransform('utm', 'map', rospy.Time(0))
+
+    map_utm_tf_matrix = ros_tf_transformer.fromTranslationRotation(tuple(trans), tuple(rot))
+    map_point = [x_map, y_map, 0, 1]
+    utm_point = np.dot(map_utm_tf_matrix, map_point)
+    
+    UTM_ZONE_NUMBER = 48
+    UTM_ZONE_LETTER = 'P'
+    
+    ll_point = utm.to_latlon(utm_point[0], utm_point[1], UTM_ZONE_NUMBER, UTM_ZONE_LETTER)
+    ll_point = {'lat':ll_point[0], 'long':ll_point[1]}
     return(ll_point)
 #============================================================================================  
 
@@ -86,14 +71,7 @@ def gps_coordinate_callback(msg):
   
 #============================================================================================
 
-#============================================================================================
-'''   This function gets the GPS coordinate and convert it into a dict   '''
-def gps_origin_callback(msg):
-    #msg type: sensor_msgs/NavSatFix
-    global gps_origin
-    gps_origin = {'lat': msg.latitude, 'long': msg.longitude}
-    # print(gps_origin)
-#============================================================================================
+
 
 #============================================================================================
 ''' This funciton is to check whether the vehicle has bene already following a plan   '''
@@ -206,13 +184,13 @@ def findRoute(gps_position, geo_goal):
     path = []
 
  
-    start = router.findNode(gps_position['lat'], gps_position['long']) # Find start and end nodes
-    end = router.findNode(geo_goal['lat'], geo_goal['long'])
+    start = router.findNode(gps_position[0], gps_position[1]) # Find start and end nodes
+    end = router.findNode(geo_goal[0], geo_goal[1])
     status, route = router.doRoute(start,end) # Find the route - a list of OSM nodes
     if status == 'success':
         routeLatLons = list(map(router.nodeLatLon, route)) # Get actual route coordinates
         for coord in routeLatLons:
-            # print(coord)
+            print(coord)
             path.append(coord)
 
             # print(routeLatLons)
@@ -220,14 +198,13 @@ def findRoute(gps_position, geo_goal):
 #--------------------------------------------------------------------------------------------
 def calculate_path(gps_position, geo_goal):
     #Calculate path in MAP FRAME!
-    global gps_origin
+    
     ll_points = findRoute(gps_position, geo_goal)
     utm_points = list()
     for i in ll_points:
-        x,y = ConvertGPStoUCS(gps_origin['lat'],gps_origin['long'],i[0], i[1])
-        utm_points.append((x,y))
-    map_points = utm_points
-    print(utm_points)
+        utm_points.append((utm.from_latlon(i[0],i[1]))[0:2])
+    map_points = utm_map_tf(utm_points)
+
     #headings index is ordered respectively to map_points index
     map_headings = calculate_heading(map_points)
     map_path_msg = generate_path_msg(map_points, map_headings)
@@ -271,9 +248,8 @@ def map_goal_callback(msg):
 
     goal_x_map = msg.goal.target_pose.pose.position.x
     goal_y_map = msg.goal.target_pose.pose.position.y
-
     print(goal_x_map,goal_y_map)
-    geo_goal   = map2ll(goal_x_map, goal_y_map)
+    # geo_goal   = map2ll(goal_x_map, goal_y_map)
     
     geo_goal_msg        = NavSatFix()
     geo_goal_msg.header = Header()
@@ -302,8 +278,6 @@ move_base_stt_sub = rospy.Subscriber(move_base_stt_input, GoalStatusArray,    \
                                      move_base_stt_callback,     queue_size=1)
 gps_sub           = rospy.Subscriber(gps_position_input, NavSatFix,           \
                                      gps_coordinate_callback,    queue_size=1)
-gps_origin_sub    = rospy.Subscriber(gps_position_input, NavSatFix,           \
-                                     gps_origin_callback,    queue_size=1)
 geo_goal_sub      = rospy.Subscriber(geo_goal_input, NavSatFix,               \
                                      geo_goal_callback,          queue_size=1)
 #CAUTION! map_goal_sub receive MoveBaseActionGoal from move_base node! 

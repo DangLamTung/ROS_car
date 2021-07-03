@@ -10,7 +10,7 @@ temp = []
 temp1 = []
 data = []
 
-ser = serial.Serial('/dev/ttyIMU', 115200, timeout=1)
+ser = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
 dt = 0.003
 currentSample = 0
 

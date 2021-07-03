@@ -32,7 +32,7 @@ while not rospy.is_shutdown():
     map_msg = OccupancyGrid()
 
     map_msg.header = Header()
-    map_msg.header.frame_id = "base_link"
+    map_msg.header.frame_id = "odom"
     map_msg.header.stamp    = rospy.Time.now()
 
     map_msg.info= MapMetaData()
